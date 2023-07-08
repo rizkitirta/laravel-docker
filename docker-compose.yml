@@ -1,0 +1,61 @@
+version: '3.9'
+
+networks:
+  laravel-docker:
+
+services:
+  nginx:
+    image: nginx:1.24.0-alpine-slim
+    container_name: nginx
+    ports:
+      - "8088:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    volumes_from:
+      - php
+    depends_on:
+      - php
+      - mysql
+    networks:
+      - laravel-docker
+  
+  mysql:
+    image: mariadb
+    container_name: mariadb
+    restart: always
+    tty: true
+    ports: 
+      - "4036:3306"
+    volumes:
+      - ./mariadb:/var/lib/mariadb
+    environment:
+      MYSQL_DATABASE : homestead  
+      MYSQL_USER : homestead  
+      MYSQL_PASSWORD : password  
+      MYSQL_ROOT_PASSWORD : password  
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mariadb
+    networks:
+      - laravel-docker
+  
+  php:
+    image: php:8-fpm
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name : php
+    volumes:
+      - ./src:/var/www/html
+    ports:
+      - "9000:9000"
+    networks: 
+      - laravel-docker
+  
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8089:8080
+    networks:
+      - laravel-docker
